@@ -32,8 +32,6 @@ namespace guile
   template<bool Protect = false>
   class SCM_convertible {};
 
-  //  using GC_Protected = std::false_type; 
-  
   template <>
   struct SCM_convertible<true>
   {
