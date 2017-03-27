@@ -33,7 +33,7 @@ namespace guile
   class SCM_convertible {};
 
   template <>
-  struct SCM_convertible<true>
+  struct SCM_convertible<false>
   {
     SCM_convertible (SCM data):
       data_field(data)
@@ -52,11 +52,11 @@ namespace guile
   };
 
   template <>
-  struct SCM_convertible<false>
+  struct SCM_convertible<true>
   {
     SCM_convertible (SCM data):
-      data_field(data_field)
-    { scm_gc_protect_object(data_field); }
+      data_field(scm_gc_protect_object(data_field))
+    { }
 
     ~SCM_convertible()
     { scm_gc_unprotect_object(data_field); } 
