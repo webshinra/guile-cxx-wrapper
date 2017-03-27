@@ -4,7 +4,7 @@ Everyone wanting to use Guile with c++ encounter the same sadness : c
 expressivity suck. Many compile-time check trivial in c++ shoud be
 deffered to runtime.
 
-Using guile as a data-support-dsl for a proffessional game engine, I
+Using guile as a data-support-dsl for a professional game engine, I
 needed at least a minimal wrapper to ease my mind.
 
 The idea is to :
@@ -74,6 +74,16 @@ stack allocation are allowed.
 
 If it is set to true, It'll use RAII to protect/unprotect the object
 during it's c++ lifetime.
+
+The alternative syntax:
+
+    guile::wrap<int, guile::GC_Protected>
+
+and
+
+    guile::wrap<int, guile::GC_NotProtected>
+
+Are more explicit, and can be used when necessary.
 
 Notice also that you can do (runtime) checked conversion using the
 check() method, like:

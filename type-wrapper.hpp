@@ -32,6 +32,9 @@ namespace guile
   template<bool Protect = false>
   class SCM_convertible {};
 
+  constexpr bool GC_Protected = true;
+  constexpr bool GC_NotProtected = false; 
+  
   template <>
   struct SCM_convertible<false>
   {
