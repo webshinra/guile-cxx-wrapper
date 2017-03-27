@@ -63,6 +63,18 @@ If needed, you could just convert it at will, like :
 
 without pain.
 
+Please notice that guile::wrap types can take a second template
+parameter, a boolean, like:
+
+    guile::wrap<int, true>;
+
+This parameter enable/disable the garbage collector protection.
+When disabled (by default) the new operators are deleted, and only
+stack allocation are allowed.
+
+If it is set to true, It'll use RAII to protect/unprotect the object
+during it's c++ lifetime.
+
 Notice also that you can do (runtime) checked conversion using the
 check() method, like:
 
@@ -74,3 +86,10 @@ allow it to choose the correct one).
 
 The file is structured to allow constructor template type deduction
 when c++17 will be aviable.
+
+
+thanks to Peter TB Brett (@peter-b on github) for his suggestion on
+protecting guile object form GC in case of heap allocation.
+
+This would probably have resulted in really nasty bugs in my far
+future.

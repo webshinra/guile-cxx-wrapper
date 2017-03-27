@@ -28,7 +28,14 @@
 
 namespace guile
 {
-  struct SCM_convertible
+
+  template<bool Protect = false>
+  class SCM_convertible {};
+
+  //  using GC_Protected = std::false_type; 
+  
+  template <>
+  struct SCM_convertible<true>
   {
     SCM_convertible (SCM data):
       data_field(data)
@@ -39,8 +46,31 @@ namespace guile
     { return data_field; }
 
     SCM data_field;
-  }; 
 
+    void* operator new(size_t) = delete;          
+    void* operator new(size_t, void*) = delete;   
+    void* operator new[](size_t) = delete;        
+    void* operator new[](size_t, void*) = delete; 
+  };
+
+  template <>
+  struct SCM_convertible<false>
+  {
+    SCM_convertible (SCM data):
+      data_field(data_field)
+    { scm_gc_protect_object(data_field); }
+
+    ~SCM_convertible()
+    { scm_gc_unprotect_object(data_field); } 
+
+    
+    /// implicite conversion to SCM.
+    operator SCM()
+    { return data_field; }
+
+    SCM data_field;
+  };
+  
   /** @brief The guile::wrap class, handle a important subset of guile
       SCM subjacent types.
 
@@ -49,104 +79,110 @@ namespace guile
       you (especialy when passing pointer type) but having
       semi-automatic transtyping could help a lot.
   */
-  template<class WrappedType, class Enable = void>
-  class wrap {}; // primary template
+  template<class WrappedType, bool GC_Protected = false, class Enable = void>
+  class wrap: public SCM_convertible<GC_Protected> {}; // primary template
  
-  template <class WrappedType>
-  struct wrap<WrappedType,
+  template <class WrappedType, bool GC_Protected>
+  struct wrap<WrappedType, GC_Protected,
               typename std::enable_if<std::is_pointer<WrappedType>::value>::type>:
-    public SCM_convertible
+    public SCM_convertible<GC_Protected>
   {
+    using Inherited = SCM_convertible<GC_Protected>;
+    
     /// 64 bits pointers are converted to scheme integer via
     /// uint64_t. Please keep in mind it induce that no meaningfull
     /// pointer-validity check can be done.
     wrap(WrappedType ptr):
-      SCM_convertible(scm_from_uint64(reinterpret_cast<uint64_t> (ptr)))
+      SCM_convertible<GC_Protected>(scm_from_uint64(reinterpret_cast<uint64_t> (ptr)))
     { }
     
     WrappedType
     operator->()
-    { return reinterpret_cast<WrappedType> (scm_to_uint64(data_field)); }
+    { return reinterpret_cast<WrappedType> (scm_to_uint64(Inherited::data_field)); }
 
     WrappedType
     check()
     {
-      if(!scm_is_integer(data_field))
+      if(!scm_is_integer(Inherited::data_field))
         throw std::bad_cast {};
       
-      return reinterpret_cast<WrappedType> (scm_to_uint64(data_field)); 
+      return reinterpret_cast<WrappedType> (scm_to_uint64(Inherited::data_field)); 
     } 
     
     template <int Arg>
     void
     check_as_arg(char const * scheme_proc) const
     {
-      SCM_ASSERT (scm_is_integer(data_field),
-                  data_field, 
+      SCM_ASSERT (scm_is_integer(Inherited::data_field),
+                  Inherited::data_field, 
                   Arg, 
                   scheme_proc);
     }
   };
 
-  template <class WrappedType>
-  struct wrap<WrappedType,
+  template <class WrappedType, bool GC_Protected>
+  struct wrap<WrappedType, GC_Protected,
               typename std::enable_if<std::is_same<WrappedType,
-                                                  std::string>::value>::type>:
-    public SCM_convertible
+                                                   std::string>::value>::type>:
+    public SCM_convertible<GC_Protected>
   {
+    using Inherited = SCM_convertible<GC_Protected>;
+    
     wrap(std::string str):
-      SCM_convertible(scm_from_locale_string(str.c_str()))
+      SCM_convertible<GC_Protected>(scm_from_locale_string(str.c_str()))
     { }
 
     wrap(SCM scm_str):
-      SCM_convertible(scm_str)
+      SCM_convertible<GC_Protected>(scm_str)
     { }
 
     WrappedType
     check()
     {
-      if(!scm_is_string(data_field))
+      if(!scm_is_string(Inherited::data_field))
         throw std::bad_cast {};
       
-      return std::string(scm_to_locale_string(data_field));
+      return std::string(scm_to_locale_string(Inherited::data_field));
     } 
     
     template <int Arg>
         void
         check_as_arg(char const * scheme_proc) const
       {
-        SCM_ASSERT (scm_is_string(data_field),
-                    data_field, 
+        SCM_ASSERT (scm_is_string(Inherited::data_field),
+                    Inherited::data_field, 
                     Arg, 
                     scheme_proc);
       }
   };
   
-  template <class WrappedType>
-  struct wrap<WrappedType,
+  template <class WrappedType, bool GC_Protected>
+  struct wrap<WrappedType, GC_Protected,
               typename std::enable_if<std::is_same<WrappedType,
                                                    int>::value>::type>:
-    public SCM_convertible
+    public SCM_convertible<GC_Protected>
   {
+    using Inherited = SCM_convertible<GC_Protected>;
+    
     wrap(WrappedType i):
-      SCM_convertible(scm_from_int(i))
+      SCM_convertible<GC_Protected>(scm_from_int(i))
     { }
     
     WrappedType
     check()
     {
-      if(!scm_is_integer(data_field))
+      if(!scm_is_integer(Inherited::data_field))
         throw std::bad_cast {};
       
-      return scm_to_int(data_field);
+      return scm_to_int(Inherited::data_field);
     }
     
     template <int Arg>
     void
     check_as_arg(char const * scheme_proc) const
     {
-      SCM_ASSERT (scm_is_integer(data_field),
-                  data_field, 
+      SCM_ASSERT (scm_is_integer(Inherited::data_field),
+                  Inherited::data_field, 
                   Arg, 
                   scheme_proc);
     }
