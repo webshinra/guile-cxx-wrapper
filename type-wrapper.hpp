@@ -55,7 +55,9 @@ namespace guile
               typename std::enable_if<std::is_pointer<WrappedType>::value>::type>:
     public SCM_convertible
   {
-    /// 64 bits pointers are converted to scheme integer via uint64_t.
+    /// 64 bits pointers are converted to scheme integer via
+    /// uint64_t. Please keep in mind it induce that no meaningfull
+    /// pointer-validity check can be done.
     wrap(WrappedType ptr):
       SCM_convertible(scm_from_uint64(reinterpret_cast<uint64_t> (ptr)))
     { }
@@ -64,6 +66,14 @@ namespace guile
     operator->()
     { return reinterpret_cast<WrappedType> (scm_to_uint64(data_field)); }
 
+    WrappedType
+    check()
+    {
+      if(!scm_is_integer(data_field))
+        throw std::bad_cast {};
+      
+      return reinterpret_cast<WrappedType> (scm_to_uint64(data_field)); 
+    } 
     
     template <int Arg>
     void
@@ -90,17 +100,25 @@ namespace guile
       SCM_convertible(scm_str)
     { }
 
-    template <int Arg>
-    void
-    check_as_arg(char const * scheme_proc) const
+    WrappedType
+    check()
     {
-      SCM_ASSERT (scm_is_string(data_field),
-                  data_field, 
-                  Arg, 
-                  scheme_proc);
+      if(!scm_is_string(data_field))
+        throw std::bad_cast {};
+      
+      return std::string(scm_to_locale_string(data_field));
     } 
-  }; 
-
+    
+    template <int Arg>
+        void
+        check_as_arg(char const * scheme_proc) const
+      {
+        SCM_ASSERT (scm_is_string(data_field),
+                    data_field, 
+                    Arg, 
+                    scheme_proc);
+      }
+  };
   
   template <class WrappedType>
   struct wrap<WrappedType,
@@ -108,10 +126,19 @@ namespace guile
                                                    int>::value>::type>:
     public SCM_convertible
   {
-    wrap(int i):
+    wrap(WrappedType i):
       SCM_convertible(scm_from_int(i))
     { }
-
+    
+    WrappedType
+    check()
+    {
+      if(!scm_is_integer(data_field))
+        throw std::bad_cast {};
+      
+      return scm_to_int(data_field);
+    }
+    
     template <int Arg>
     void
     check_as_arg(char const * scheme_proc) const
