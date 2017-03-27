@@ -21,6 +21,9 @@ boilerplate-code nedded by guile.
 I'm open to every suggestion/pull request concerning potential
 improvements.
 
+I will probably extend it over time, handeling more types and maybe
+even more guile stuff.
+
 # basic usage
 
 To declare a c++ function callable form guile, the standard process
@@ -60,14 +63,14 @@ If needed, you could just convert it at will, like :
 
 without pain.
 
-Notice also that you can do checked conversion using the check()
-method, like:
+Notice also that you can do (runtime) checked conversion using the
+check() method, like:
 
     int X = x.check();
 
 where x will be here checked with the scm_is_integer() predicate and
-throw a bad_cast exception if something went wrong.
-(template allow to choose the correct one).
+throw a bad_cast exception if something went wrong.  (the template
+allow it to choose the correct one).
 
 The file is structured to allow constructor template type deduction
 when c++17 will be aviable.
