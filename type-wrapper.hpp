@@ -58,7 +58,7 @@ namespace guile
   struct SCM_convertible<true>
   {
     SCM_convertible (SCM data):
-      data_field(scm_gc_protect_object(data_field))
+      data_field(scm_gc_protect_object(data))
     { }
 
     ~SCM_convertible()
