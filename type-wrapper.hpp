@@ -57,19 +57,27 @@ namespace guile
   template <>
   struct SCM_convertible<true>
   {
+    constexpr SCM_convertible () = default;
+  
     SCM_convertible (SCM data):
-      data_field(scm_gc_protect_object(data))
-    { }
+      data_field(data)
+    {
+      if (!scm_is_eq(data_field, SCM_UNDEFINED))
+        scm_gc_protect_object(data_field);
+    }
 
     ~SCM_convertible()
-    { scm_gc_unprotect_object(data_field); } 
+    {
+      if (!scm_is_eq(data_field, SCM_UNDEFINED))
+        scm_gc_unprotect_object(data_field);
+    } 
 
     
     /// implicite conversion to SCM.
     operator SCM()
     { return data_field; }
 
-    SCM data_field;
+    SCM data_field = SCM_UNDEFINED;
   };
   
   /** @brief The guile::wrap class, handle a important subset of guile
