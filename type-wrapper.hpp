@@ -145,6 +145,9 @@ namespace guile
       SCM_convertible<GC_Protected>(scm_str)
     { }
 
+    operator std::string()
+    { std::string(scm_to_locale_string(Inherited::data_field)); } 
+    
     WrappedType
     check()
     {
@@ -176,6 +179,9 @@ namespace guile
     wrap(WrappedType i):
       SCM_convertible<GC_Protected>(scm_from_int(i))
     { }
+
+    operator WrappedType()
+    { return scm_to_int(Inherited::data_field); } 
     
     WrappedType
     check()
