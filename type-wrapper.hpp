@@ -146,7 +146,7 @@ namespace guile
     { }
 
     operator std::string()
-    { std::string(scm_to_locale_string(Inherited::data_field)); } 
+    { return std::string(scm_to_locale_string(Inherited::data_field)); } 
     
     WrappedType
     check()
